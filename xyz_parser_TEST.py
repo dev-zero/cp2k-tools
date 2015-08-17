@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from cp2k.parser.xyz import XYZParser
+from cp2k.parser import XYZParser
 
 p = XYZParser()
 
