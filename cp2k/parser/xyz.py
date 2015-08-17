@@ -30,7 +30,7 @@ class XYZParser:
                 if not m:
                     raise XYZParserException()
 
-                struct['data'].append(( m.group('sym'), m.group('x'), m.group('y'), m.group('z') ))
+                struct['data'].append(( m.group('sym'), float(m.group('x')), float(m.group('y')), float(m.group('z')) ))
 
             frames.append(struct)
 
