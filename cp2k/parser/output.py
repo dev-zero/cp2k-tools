@@ -4,10 +4,10 @@ import re
 class ElementParserSection:
     def __init__(self):
         self._p = {
-                'DBCSR': {},
-                'CP2K': {},
-                'GLOBAL': {},
-                'ENERGY': {}
+                'DBCSR': dict(),
+                'CP2K': dict(),
+                'GLOBAL': dict(),
+                'ENERGY': dict()
                 }
         self._k = ''
         self._v = ''
@@ -181,7 +181,7 @@ class CP2KOutputParser:
         # merge the data of all parsers first
         for p in self._parsers:
             for k, v in p.data().items():
-                d.setdefault(k, []).append(v)
+                d[k] = v
 
         # if the second key is empty, '.' was passed and we return everything
         if not keys[1] and len(keys) is 2:
