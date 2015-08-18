@@ -86,7 +86,7 @@ class ElementParserProgramInfo:
         return self._finished
 
     def data(self):
-        return self._p
+        return { 'PROGRAM': self._p }
 
 class ElementParserError:
     # returns true if parser can parse this line
