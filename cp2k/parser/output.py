@@ -35,6 +35,10 @@ class ElementParserSection:
     def finished(self):
         return True
 
+    def data(self):
+        return self._p
+
+
 class ElementParserProgramInfo:
     def __init__(self):
         self._k = ''
@@ -81,6 +85,9 @@ class ElementParserProgramInfo:
     def finished(self):
         return self._finished
 
+    def data(self):
+        return self._p
+
 class ElementParserError:
     # returns true if parser can parse this line
     def match(self, line):
@@ -104,6 +111,9 @@ class ElementParserError:
     def finished(self):
         return True
 
+    def data(self):
+        return {}
+
 class ElementParserTable:
     def __init__(self):
         self._tn = ''
@@ -124,6 +134,9 @@ class ElementParserTable:
     # this element parser is stateless, always finish directly
     def finished(self):
         return True
+
+    def data(self):
+        return {}
 
 class CP2KOutputParser:
     def __init__(self):
@@ -149,12 +162,46 @@ class CP2KOutputParser:
                 if p.match(line):
                     p.parse(line)
                     break
-            else:
-                if len(line.strip()) > 0:
-                    print('no parser found for: "%s"' % line)
+#            else:
+#                if len(line.strip()) > 0:
+#                    print('no parser found for: "%s"' % line)
 
-        #import pprint
-        #pp = pprint.PrettyPrinter(indent=2)
-        #pp.pprint(self._p)
+    # the query language is supposed to follow the one from the 'jq' tool,
+    # but for now we support only '.' (for everything), '.foo.bar' and 
+    def query(self, q):
+        keys = q.split('.')
 
+        # the string should start with a '.', so the first segment is always empty
+        # TODO: throw exception here
+        if keys[0]:
+            return {}
 
+        d = {}
+
+        # merge the data of all parsers first
+        for p in self._parsers:
+            for k, v in p.data().items():
+                d.setdefault(k, []).append(v)
+
+        # if the second key is empty, '.' was passed and we return everything
+        if not keys[1] and len(keys) is 2:
+            return d
+
+        # the first key is always in one of the parsers
+        try:
+            for k in keys[1:]:
+                m = re.match(r'(?P<k>[^\[\]]*)(\[(?P<i>[\d\[\]]+)\])?$', k)
+                if m.group('k') is not None:
+                    d = d[m.group('k')]
+                if m.group('i') is not None:
+                    for i in m.group('i').split(']['):
+                        # for dictionaries sort it alphabetically first (which makes it automatically a list of pairs)
+                        if type(d) is dict:
+                            d = sorted(d.items())
+                        d = d[int(i)]
+
+        # ignore key or type errors (when walking the parser data objects)
+        except (TypeError, KeyError, IndexError):
+            return {}
+
+        return d
