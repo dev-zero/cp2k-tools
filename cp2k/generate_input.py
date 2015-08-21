@@ -21,23 +21,8 @@ Options:
 from docopt import docopt
 
 from cp2k.generator import CP2KInputGenerator
+from cp2k.tools import smart_open
 import sys
-
-# from http://stackoverflow.com/questions/17602878/how-to-handle-both-with-open-and-sys-stdout-nicely
-import contextlib
-
-@contextlib.contextmanager
-def smart_open(filename=None):
-    if filename and filename != '-':
-        fh = open(filename, 'w')
-    else:
-        fh = sys.stdout
-
-    try:
-        yield fh
-    finally:
-        if fh is not sys.stdout:
-            fh.close()
 
 if __name__ == '__main__':
     arguments = docopt(__doc__)
