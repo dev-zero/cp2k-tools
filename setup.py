@@ -26,9 +26,9 @@ setup(
     install_requires = ['setuptools', 'docopt'],
     entry_points = {
         'console_scripts': [
-            'oq = cp2k.oq:main',
-            'extract_last_frame = cp2k.extract_last_frame:main',
-            'generate_input = cp2k.generate_input:main',
+            'oq = cp2k.cli:oq',
+            'extract_last_frame = cp2k.cli:extract_last_frame',
+            'generate_input = cp2k.cli:generate_input',
         ],
     },
     classifiers = [
