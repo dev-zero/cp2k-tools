@@ -100,7 +100,7 @@ Options:
 def oq():
     """Usage: oq.py [-hj] [-f FILE] QUERY
 
-Extract data from cp2k output
+Extract data from cp2k output. The syntax is similar to that of the jq tool.
 
 Options:
     -h --help
