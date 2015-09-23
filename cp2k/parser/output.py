@@ -81,7 +81,6 @@ class ElementParserProgramInfo:
             self._finished = True
             return False
 
-     # this element parser is stateless, always finish directly
     def finished(self):
         return self._finished
 
