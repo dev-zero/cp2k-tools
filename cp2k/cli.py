@@ -5,6 +5,7 @@ from cp2k.generator import *
 import sys
 from docopt import docopt
 
+
 def extract_last_frame():
     """Usage: extract_last_frame.py [-h] [XYZINPUT] [XYZOUTPUT]
 
@@ -26,6 +27,7 @@ Options:
     with smart_open(arguments['XYZINPUT'], 'r') as source:
         with smart_open(arguments['XYZOUTPUT'], 'w') as dest:
             g.write([p.parse(source)[-1]], dest)
+
 
 def generate_inputs():
     """Usage: generate_inputs.py [-h] single TEMPLATE SNIPPET [OUTPUT] [COORDS]
@@ -78,13 +80,14 @@ Options:
 
         generator.load_config(config)
 
-        target_dir = os.path.join(arguments['OUTPUTDIR'], config['global']['project'])
+        target_dir = os.path.join(arguments['OUTPUTDIR'],
+                                  config['global']['project'])
         target_filename = '%s.inp' % os.path.basename(snippet)[:-5]
 
         try:
             os.mkdir(target_dir)
         except FileExistsError:
-            pass # ignore if directory already exists
+            pass  # ignore if directory already exists
 
         target_config_path = os.path.join(target_dir, target_filename)
         target_coord_path = os.path.join(target_dir, 'initial_coords.xyz')
@@ -95,7 +98,35 @@ Options:
         with open(target_coord_path, 'w') as f:
             generator.write_coords(f)
 
-        print('generating configuration for %s (in %s)' % (config['global']['project'], target_dir))
+        print('generating configuration for %s (in %s)' %
+              (config['global']['project'], target_dir))
+
+
+def cp2kparse():
+    """Usage: cp2kparse.py [-hj] [-f FILE]
+
+Parse cp2k output.
+
+Options:
+    -h --help
+    -f --file=FILE    cp2k output file to read [default: -]
+    -j --json         produce JSON output instead of pretty printed python objects
+
+"""
+
+    arguments = docopt(cp2kparse.__doc__)
+
+    p = CP2KOutputBlockParser()
+    with smart_open(arguments['--file'], 'r') as fh:
+        out = p.parse(fh.read())
+        if arguments['--json']:
+            import json
+            print(json.dumps(out))
+        else:
+            import pprint
+            pp = pprint.PrettyPrinter(indent=2)
+            pp.pprint(out)
+
 
 def oq():
     """Usage: oq.py [-hj] [-f FILE] QUERY
@@ -121,6 +152,7 @@ Options:
             import pprint
             pp = pprint.PrettyPrinter(indent=2)
             pp.pprint(p.query(arguments['QUERY']))
+
 
 if __name__ == '__main__':
     sys.argv = sys.argv[1:]
