@@ -214,3 +214,78 @@ class CP2KOutputParser:
             return {}
 
         return d
+
+class BlockParserReferences:
+    name = 'references'
+
+    import regex
+
+    _ref_table = regex.compile(r'''
+\ \-+\n                                     # {
+\ \-\ +\-\n                                 #
+\ \-\ +R\ E\ F\ E\ R\ E\ N\ C\ E\ S\ +\-\n  #   match the header
+\ \-\ +\-\n                                 #
+\ \-+\n                                     # }
+\ \n                                        # the newline between the header and the first entry
+(\ CP2K.+\n){2}                             # also consume the two header CP2K declaration lines
+\n
+(                                           # match one block/reference
+  (?P<references>(?s).*?                    #   non-greedily match everything (including newlines)
+  (?=\n\n))                                 #   .. except two newlines
+  \n+                                       #   now consume all newlines
+)+                                          # there can be multiple references of course
+(?=\ \-+\n)                                 # stop at ' --' because that marks the next table
+        ''', regex.X | regex.M | regex.VERSION1)
+
+    _ref_block = regex.compile(r'''
+\s*                                         # consume the whitespace at the beginning
+(?P<authors>[\w\s,\-]+)                     # match the primary author
+(;(?P<authors>[\w\s,\-]+))*                 # .. and all others if available
+\.\s*                                       # .. until the . and consume any whitespaces
+(?P<journal>[\w\s\-]+),\s
+(?P<volume>[\d\s\(\)\-]+),\s
+(?P<pages>\d+\-\d+)\s
+\( (?P<year>\d{4}) \)
+\.\s*
+(?P<title>[^\.]+)
+\.\s*
+(?P<url>http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+)
+        ''', regex.X)
+
+    @classmethod
+    def parse(cls, txt):
+        """
+        Parse the provided string for reference block and return
+        a tuple (content, nonparsedstring).
+        """
+        entry = lambda r: {
+            'authors': r.captures('authors'),
+            'journal': r.group('journal'),
+            'volume':  r.group('volume'),
+            'pages':   r.group('pages'),
+            'year':    r.group('year'),
+            'title':   r.group('title'),
+            'url':     r.group('url'),
+            }
+        return ([entry(cls._ref_block.search(ref.replace('\n', '')))
+                for ref in cls._ref_table.search(txt).captures('references')],
+            cls._ref_table.sub("", txt))
+
+
+class CP2KOutputBlockParser:
+    """
+    Parser working on a complete CP2K output log string and parsing it block by block
+    (in contrast to the line-by-line streaming parser operating on a file handle)
+    """
+
+    def __init__(self):
+        self._bparsers = [
+            BlockParserReferences
+        ]
+
+    def parse(self, txt):
+        out = {}
+        for p in self._bparsers:
+            out[p.name], txt = p.parse(txt)
+
+        return out
