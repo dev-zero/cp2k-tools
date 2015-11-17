@@ -1,7 +1,7 @@
 
-import re
-
 class ElementParserSection:
+    import re
+
     def __init__(self):
         self._p = {
                 'DBCSR': dict(),
@@ -40,6 +40,8 @@ class ElementParserSection:
 
 
 class ElementParserProgramInfo:
+    import re
+
     def __init__(self):
         self._k = ''
         self._v = ''
@@ -85,9 +87,12 @@ class ElementParserProgramInfo:
         return self._finished
 
     def data(self):
-        return { 'PROGRAM': self._p }
+        return {'PROGRAM': self._p}
+
 
 class ElementParserError:
+    import re
+
     # returns true if parser can parse this line
     def match(self, line):
         m = re.match('^ \*{76}$', line)
@@ -113,7 +118,10 @@ class ElementParserError:
     def data(self):
         return {}
 
+
 class ElementParserTable:
+    import re
+
     def __init__(self):
         self._tn = ''
 
@@ -168,6 +176,8 @@ class CP2KOutputParser:
     # the query language is supposed to follow the one from the 'jq' tool,
     # but for now we support only '.' (for everything), '.foo.bar' and 
     def query(self, q):
+        import re
+
         keys = q.split('.')
 
         # the string should start with a '.', so the first segment is always empty
