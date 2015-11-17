@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 
 from cp2k.tools import *
 from cp2k.parser import *
