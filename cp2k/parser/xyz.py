@@ -20,6 +20,7 @@ class XYZParser:
             comment = fh.readline().strip()
 
             struct = {
+                    'natoms': noa,
                     'comment': comment,
                     'data': []
                     }
