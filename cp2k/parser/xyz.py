@@ -27,7 +27,7 @@ class XYZParser:
 
             def __next__(self):
                 try:
-                    match = self._it.next()
+                    match = next(self._it)
                 except StopIteration:
                     # if we reached the number of atoms declared, everything is well
                     # and we re-raise the StopIteration exception
