@@ -147,7 +147,8 @@ class XYZParser:
                     natoms)
                 )
 
-    def parse(self, fh_or_string):
+    @staticmethod
+    def parse(fh_or_string):
         if hasattr(fh_or_string, 'read'):
             s = fh_or_string.read()
         else:
