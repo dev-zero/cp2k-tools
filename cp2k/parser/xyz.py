@@ -122,5 +122,5 @@ class XYZParser:
 
         return [{ 'natoms': natoms,
                     'comment': comment,
-                    'data': [(sym, x, y, z) for sym, (x, y, z) in data]
-                    } for natoms, comment, data in XYZParser.parse_iter(s)]
+                    'atoms': [(sym, (x, y, z)) for (sym, (x, y, z)) in atoms]
+                    } for (natoms, comment,  atoms) in XYZParser.parse_iter(s)]
