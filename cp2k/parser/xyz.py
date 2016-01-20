@@ -2,12 +2,45 @@
 class XYZParser:
     @staticmethod
     def parse_iter(string):
-        """
-        Yields a tuple `(natoms, comment, atomiter)`for each frame
-        in a XYZ file where `atomiter` is an iterator yielding a
-        nested tuple `(symbol, (x, y, z))` for each entry.
+        """Generates nested tuples for frames in XYZ files.
 
-        :param string: a string containing XYZ-structured text
+        Args:
+            string: a string containing XYZ-structured text
+
+        Yields:
+            tuple: `(natoms, comment, atomiter)` for each frame
+            in the XYZ data where `atomiter` is an iterator yielding a
+            nested tuple `(symbol, (x, y, z))` for each entry.
+
+        Raises:
+            TypeError: If the number of atoms specified for the frame does not match
+                the number of atom entries in the file.
+
+        Examples:
+            >>> print(len(list(XYZParser.parse_iter('''
+            ... 5
+            ... no comment
+            ...  C         5.0000000000        5.0000000000        5.0000000000
+            ...  H         5.6401052216        5.6401052216        5.6401052216
+            ...  H         4.3598947806        4.3598947806        5.6401052208
+            ...  H         4.3598947806        5.6401052208        4.3598947806
+            ...  H         5.6401052208        4.3598947806        4.3598947806
+            ... 5
+            ... no comment
+            ...  C         5.0000000000        5.0000000000        5.0000000000
+            ...  H         5.6401902064        5.6401902064        5.6401902064
+            ...  H         4.3598097942        4.3598097942        5.6401902063
+            ...  H         4.3598097942        5.6401902063        4.3598097942
+            ...  H         5.6401902063        4.3598097942        4.3598097942
+            ... 5
+            ... no comment
+            ...  C         5.0000000000        5.0000000000        5.0000000000
+            ...  H         5.6401902064        5.6401902064        5.6401902064
+            ...  H         4.3598097942        4.3598097942        5.6401902063
+            ...  H         4.3598097942        5.6401902063        4.3598097942
+            ...  H         5.6401902063        4.3598097942        4.3598097942
+            ... '''))))
+            3
         """
 
         class BlockIterator(object):
@@ -122,5 +155,5 @@ class XYZParser:
 
         return [{ 'natoms': natoms,
                     'comment': comment,
-                    'atoms': [(sym, (x, y, z)) for (sym, (x, y, z)) in atoms]
-                    } for (natoms, comment,  atoms) in XYZParser.parse_iter(s)]
+                    'atoms': list(atomiter)
+                    } for (natoms, comment,  atomiter) in XYZParser.parse_iter(s)]

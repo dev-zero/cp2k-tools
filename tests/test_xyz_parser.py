@@ -51,3 +51,22 @@ H 5.6401902063 4.3598097942 4.3598097942
                 ('H', (5.6401902063, 4.3598097942, 4.3598097942)) ] } ]
 
     assert expected == p.parse(s)
+
+def test_parse_iterator_last_frame():
+    atoms = [
+        ('C', (5.0, 5.0, 5.0)),
+        ('H', (5.6401902064, 5.6401902064, 5.6401902064)),
+        ('H', (4.3598097942, 4.3598097942, 5.6401902063)),
+        ('H', (4.3598097942, 5.6401902063, 4.3598097942)),
+        ('H', (5.6401902063, 4.3598097942, 4.3598097942)) ]
+
+    with open('tests/test_xyz_parser-simple_multiframe_file.xyz', 'r') as f:
+        s = f.read()
+
+        frame_iterator = XYZParser.parse_iter(s)
+        for (natoms, comment, atomiter) in frame_iterator:
+            pass
+
+        assert natoms == 5
+        assert comment == 'i =        3, E =        -8.0632890314'
+        assert list(atomiter) == atoms
