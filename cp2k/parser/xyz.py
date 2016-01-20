@@ -1,6 +1,4 @@
 
-import re
-
 class XYZParser:
     @staticmethod
     def parse_iter(string):
@@ -116,8 +114,13 @@ class XYZParser:
                     natoms)
                 )
 
-    def parse(self, fh):
+    def parse(self, fh_or_string):
+        if hasattr(fh_or_string, 'read'):
+            s = fh_or_string.read()
+        else:
+            s = fh_or_string
+
         return [{ 'natoms': natoms,
                     'comment': comment,
                     'data': [(sym, x, y, z) for sym, (x, y, z) in data]
-                    } for natoms, comment, data in XYZParser.parse_iter(fh.read())]
+                    } for natoms, comment, data in XYZParser.parse_iter(s)]
