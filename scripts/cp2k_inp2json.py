@@ -19,32 +19,39 @@
 import pprint
 import json
 
+from collections import OrderedDict
+
 import click
 
 from parsimonious.grammar import Grammar
 from parsimonious.nodes import NodeVisitor
-import dpath
+
 
 CP2K_INP_GRAMMAR = Grammar(r"""
-content  = line*
-line = s* instruction? s* comment? s* "\n"?
+content  = ( cline / section )*
 
-instruction = section_end / section_start / kv
+section = section_start section_content section_end
 
-section_end = "&END" s+ name
-section_start = "&" name (s+ value)?
-kv = name s* unitspec? values? s* comment?
+section_start = s* "&" sname (s+ value)? comment? nl
+section_end = s* "&" end (s+ value)? comment? nl
+section_content = (kv / cline / section )*
+
+kv = s* name s* unitspec? values? s* comment? nl
 
 unitspec = unit s*
 unit = "[" s* name s* "]"
 values = (value s*)+
-value = ~"[A-Z0-9_\-\+\./]+"i
+value = ~r"[A-Z0-9_\-\+\./\"\']+"i
 
-name = ~"[A-Z0-9_\-]+"i
+name = ~r"[A-Z0-9_\-]+"i
+end = ~r"END"i
+sname = !end name
 
-s = ~"[ \t]"
+s = ~r"[ \t]"
+nl = ~r"[\n]"
 
-comment  = ~"\#.*"
+comment  = ~r"[#!].*"
+cline = s* comment? nl
 """)
 
 
@@ -52,8 +59,6 @@ class CP2KInput2Dict(NodeVisitor):
     def __init__(self, *args, **kwargs):
         super(CP2KInput2Dict, self).__init__(*args, **kwargs)
         self.grammar = CP2K_INP_GRAMMAR
-        self._data = {"root": {}}
-        self._sections = ["root"]
 
     # anonymous nodes
     def generic_visit(self, node, visited_children):
@@ -64,27 +69,62 @@ class CP2KInput2Dict(NodeVisitor):
 
         return children if children else None
 
-    def visit_content(self, node, _):
-        return self._data['root']
+
+    def visit_content(self, _, visited_children):
+        # we can't have duplicate sections on the toplevel
+        # so we only have to filter comments here
+        return OrderedDict([vc for vc in visited_children if vc is not None])
+
+
+    def visit_section(self, node, visited_children):
+        section, content, _ = visited_children
+
+        name, param = section
+        if param is not None:
+            content['_'] = param
+
+        return (name, content)
+
 
     def visit_section_start(self, _, visited_children):
-        _, name, value = visited_children
+        _, _, name, value, _, _ = visited_children
+        return (name, value)
 
-        dpath.util.get(self._data, self._sections)[name] = {}
-        self._sections.append(name)
 
-        if value:
-            dpath.util.get(self._data, self._sections)['_'] = value
+    def visit_section_content(self, _, visited_children):
+        if visited_children is None:
+            # a section with no children should be an empty dict
+            return OrderedDict()
 
-    def visit_section_end(self, _, visited_children):
-        _, _, name = visited_children
-        current = self._sections.pop()
+        if isinstance(visited_children, tuple):
+            # a single key/value tuple can directly be converted to a dict
+            return OrderedDict(visited_children)
 
-        if current != name:
-            print("uh, oh, closing wrong section")
+
+        content = OrderedDict()
+
+        for child in visited_children:
+            # filter out empty values (for example the comments)
+            if child is None:
+                continue
+
+            key, value = child
+
+            # if the key already exists we got the same keyword/section multiple times
+            if key in content:
+                if isinstance(content[key], list):  # if it is already a list, simply append to it
+                    content[key].append(value)
+                else:  # if not, make it a list
+                    content[key] = [content[key], value]
+            else:  # and if the key does not exist, assign it
+                content[key] = value
+
+        return content
+
 
     def visit_name(self, node, _):
         return node.text.lower()
+
 
     def visit_value(self, node, _):
         value = node.text
@@ -101,16 +141,19 @@ class CP2KInput2Dict(NodeVisitor):
 
         return node.text
 
+
     def visit_unit(self, _, visited_children):
         _, _, name, _, _ = visited_children
         return name
+
 
     def visit_unitspec(self, _, visited_children):
         unit, _ = visited_children
         return unit
 
+
     def visit_kv(self, _, visited_children):
-        k, _, unit, values, _, _ = visited_children
+        _, k, _, unit, values, _, _, _ = visited_children
 
         value = []
 
@@ -124,8 +167,7 @@ class CP2KInput2Dict(NodeVisitor):
         else:
             value = tuple(value)
 
-        dpath.util.get(self._data, self._sections).update({k: value})
-        return None  # we don't really use that return value
+        return (k, value)
 
 
     def visit_values(self, _, values):
@@ -146,7 +188,7 @@ def cli(cp2k_input_file, python_output):
         pprinter = pprint.PrettyPrinter(indent=4)
         pprinter.pprint(data)
     else:
-        click.echo(json.dumps(data, sort_keys=True, indent=4))
+        click.echo(json.dumps(data, indent=4))
 
 
 if __name__ == '__main__':
