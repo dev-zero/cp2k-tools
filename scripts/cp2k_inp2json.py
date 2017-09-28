@@ -77,9 +77,34 @@ class CP2KInput2Dict(NodeVisitor):
 
 
     def visit_section(self, node, visited_children):
-        section, content, _ = visited_children
+        (name, param), entries, _ = visited_children
 
-        name, param = section
+        content = OrderedDict()
+
+        for child in entries:
+            key, value = child
+
+            # DEFAULT_KEYWORDs have to be treated differently since their first
+            # name is actually not a key but already a parameter
+            # TODO: add more sections with default parameters
+            # TODO: maybe delay mangling key names until here
+            if name == 'coord' and key not in ['scaled', 'unit']:
+                if isinstance(value, tuple):
+                    value = (key.title(),) + value
+                else:
+                    value = (key.title(), value)
+                key = '*'
+
+            # if the key already exists we got the same keyword/section multiple times
+            if key in content:
+                if isinstance(content[key], list):  # if it is already a list, simply append to it
+                    content[key].append(value)
+                else:  # if not, make it a list
+                    content[key] = [content[key], value]
+            else:  # and if the key does not exist, assign it
+                content[key] = value
+
+
         if param is not None:
             content['_'] = param
 
@@ -94,32 +119,14 @@ class CP2KInput2Dict(NodeVisitor):
     def visit_section_content(self, _, visited_children):
         if visited_children is None:
             # a section with no children should be an empty dict
-            return OrderedDict()
+            return []
 
         if isinstance(visited_children, tuple):
-            # a single key/value tuple can directly be converted to a dict
-            return OrderedDict(visited_children)
+            # a single key/value tuple can be put directly into the list
+            return [visited_children]
 
+        return [vc for vc in visited_children if vc is not None]
 
-        content = OrderedDict()
-
-        for child in visited_children:
-            # filter out empty values (for example the comments)
-            if child is None:
-                continue
-
-            key, value = child
-
-            # if the key already exists we got the same keyword/section multiple times
-            if key in content:
-                if isinstance(content[key], list):  # if it is already a list, simply append to it
-                    content[key].append(value)
-                else:  # if not, make it a list
-                    content[key] = [content[key], value]
-            else:  # and if the key does not exist, assign it
-                content[key] = value
-
-        return content
 
 
     def visit_name(self, node, _):
