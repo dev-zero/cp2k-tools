@@ -32,7 +32,7 @@ import numpy as np
 
 
 HEADER_MATCH = re.compile(
-    r'\# Projected DOS for atomic kind C at iteration step i = \d+, E\(Fermi\) = [ \t]* (?P<Efermi>[^\t ]+) a\.u\.')
+    r'\# Projected DOS for atomic kind (?P<element>\w+) at iteration step i = \d+, E\(Fermi\) = [ \t]* (?P<Efermi>[^\t ]+) a\.u\.')
 
 
 if __name__ == '__main__':
