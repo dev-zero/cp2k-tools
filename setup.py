@@ -4,9 +4,9 @@
 import os
 from setuptools import setup, find_packages
 
-version = '0.0.2'
+version = '0.0.3'
 
-description = "CP2K input/output mangling tools"
+description = "CP2K tools & scripts"
 cur_dir = os.path.dirname(__file__)
 try:
     long_description = open(os.path.join(cur_dir, 'README.md')).read()
@@ -36,12 +36,12 @@ setup(
             'oq = cp2k_tools.cli:oq',
             'extract_last_frame = cp2k_tools.cli:extract_last_frame',
             'generate_input = cp2k_tools.cli:generate_input',
-            'cp2k_inp2json = cp2k_tools.parser.input_cli:cli'
+            'cp2k_inp2json = cp2k_tools.parser.input_cli:cli',
+            'cp2k_json2inp = cp2k_tools.generator.cli:cli'
         ],
     },
     scripts=[
         'scripts/cp2k_bs2csv.py',
-        'scripts/cp2k_json2inp.py',
         'scripts/cp2k_pdos.py',
         ],
     classifiers=[
