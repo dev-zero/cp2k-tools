@@ -42,11 +42,11 @@ if __name__ == '__main__':
     parser.add_argument('natoms', metavar='number-of-atoms', type=int,
                         help="the number of atoms in the structure")
     parser.add_argument('--sigma', '-s', type=float, default=0.02,
-                        help="sigma for the gaussian distribution")
+                        help="sigma for the gaussian distribution (default: 0.02)")
     parser.add_argument('--de', '-d', type=float, default=0.001,
-                        help="integration step size")
+                        help="integration step size (default: 0.001)")
     parser.add_argument('--total-sum', action='store_true',
-                        help="calculate and print the total sum for each orbital")
+                        help="calculate and print the total sum for each orbital (default: no)")
     args = parser.parse_args()
 
     with open(args.pdosfilename, 'r') as fhandle:
