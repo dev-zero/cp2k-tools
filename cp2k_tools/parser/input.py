@@ -161,7 +161,7 @@ class CP2KInput2Dict(NodeVisitor):
         if unit:
             value.append("[%s]" % unit)
 
-        value += values
+        value += values if values else [None]  # handle lone keywords
 
         if len(value) == 1:
             value = value[0]
