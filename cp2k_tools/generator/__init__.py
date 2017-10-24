@@ -1,7 +1,6 @@
 from io import BufferedIOBase
 
-from cp2k.generator.input import CP2KInputGenerator
-from cp2k.generator.xyz import XYZGenerator
+from .xyz import XYZGenerator
 
 
 def dict2line_iter(nested, ilevel=0):
