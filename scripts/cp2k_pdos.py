@@ -51,7 +51,13 @@ if __name__ == '__main__':
 
     with open(args.pdosfilename, 'r') as fhandle:
         header = HEADER_MATCH.match(fhandle.readline().rstrip())
-        Efermi = float(header.group('Efermi'))  # will raise an error if not found
+        if not header:
+            print(("The file '{}' does not look like a CP2K PDOS output.\n"
+                   "If it is indeed a correct output file, please report an issue at\n"
+                   "    https://github.com/dev-zero/cp2k-tools/issues").format(args.pdosfilename))
+            sys.exit(1)
+
+        Efermi = float(header.group('Efermi'))
         data = np.loadtxt(fhandle)  # load the rest directly with numpy
 
     npnts, ncols = data.shape
