@@ -4,9 +4,9 @@
 import os
 from setuptools import setup, find_packages
 
-version = '0.0.2'
+version = '0.0.3'
 
-description = "CP2K input/output mangling tools"
+description = "CP2K tools & scripts"
 cur_dir = os.path.dirname(__file__)
 try:
     long_description = open(os.path.join(cur_dir, 'README.md')).read()
