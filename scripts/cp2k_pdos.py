@@ -27,12 +27,28 @@ from __future__ import print_function
 import sys
 import re
 import argparse
+import contextlib
 
 import numpy as np
 
 
 HEADER_MATCH = re.compile(
     r'\# Projected DOS for atomic kind (?P<element>\w+) at iteration step i = \d+, E\(Fermi\) = [ \t]* (?P<Efermi>[^\t ]+) a\.u\.')
+
+
+# from https://stackoverflow.com/a/17603000/1400465
+@contextlib.contextmanager
+def smart_open(filename=None):
+    if filename and filename != '-':
+        fhandle = open(filename, 'w')
+    else:
+        fhandle = sys.stdout
+
+    try:
+        yield fhandle
+    finally:
+        if fhandle is not sys.stdout:
+            fhandle.close()
 
 
 if __name__ == '__main__':
@@ -47,6 +63,8 @@ if __name__ == '__main__':
                         help="integration step size (default: 0.001)")
     parser.add_argument('--total-sum', action='store_true',
                         help="calculate and print the total sum for each orbital (default: no)")
+    parser.add_argument('--output', '-o', type=str, default=None,
+                        help="write output to specified file (default: write to standard output)")
     args = parser.parse_args()
 
     with open(args.pdosfilename, 'r') as fhandle:
@@ -92,7 +110,9 @@ if __name__ == '__main__':
     xmesh -= Efermi  # put the Fermi energy at 0
     xmesh *= 27.211384  # convert to eV
     ymesh /= args.natoms  # normalize
-    for mpnt in range(nmesh):
-        print(("{:16.8f}" + " {:16.8f}"*ncols).format(xmesh[mpnt], *ymesh[mpnt, :]))
+
+    with smart_open(args.output) as fhandle:
+        for mpnt in range(nmesh):
+            print(("{:16.8f}" + " {:16.8f}"*ncols).format(xmesh[mpnt], *ymesh[mpnt, :]), file=fhandle)
 
 #  vim: set ts=4 sw=4 tw=0 :
