@@ -1,7 +1,12 @@
 from io import BufferedIOBase
 
-from cp2k.generator.input import CP2KInputGenerator
-from cp2k.generator.xyz import XYZGenerator
+from .xyz import XYZGenerator
+
+
+try:  # Python 2
+    LAST_UNICODE_CHARACTER = unichr(0x10ffff)
+except NameError:
+    LAST_UNICODE_CHARACTER = chr(0x10ffff)
 
 
 def dict2line_iter(nested, ilevel=0):
@@ -18,7 +23,7 @@ def dict2line_iter(nested, ilevel=0):
         # ensure subsection generating entrys are sorted after keywords
         if isinstance(val, (dict, list)):
             # .. by prefixing them with the last possible character before sorting
-            return chr(0x10ffff) + key.lower()
+            return LAST_UNICODE_CHARACTER + key.lower()
 
         return key.lower()
 

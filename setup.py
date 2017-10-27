@@ -4,7 +4,7 @@
 import os
 from setuptools import setup, find_packages
 
-version = '0.0.3'
+version = '0.0.4'
 
 description = "CP2K tools & scripts"
 cur_dir = os.path.dirname(__file__)
