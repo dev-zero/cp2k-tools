@@ -26,10 +26,10 @@ setup(
     install_requires=[
         'setuptools',
         'docopt',
+        'numpy',
         'parsimonious>=0.8',
         'click>=6.7',
         'regex>=2017.09.23',
-        'numpy>=1.13.3',
         ],
     entry_points={
         'console_scripts': [
