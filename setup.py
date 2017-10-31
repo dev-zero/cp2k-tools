@@ -4,7 +4,7 @@
 import os
 from setuptools import setup, find_packages
 
-version = '0.0.4'
+version = '0.0.5'
 
 description = "CP2K tools & scripts"
 cur_dir = os.path.dirname(__file__)
@@ -26,10 +26,10 @@ setup(
     install_requires=[
         'setuptools',
         'docopt',
+        'numpy',
         'parsimonious>=0.8',
         'click>=6.7',
         'regex>=2017.09.23',
-        'numpy>=1.13.3',
         ],
     entry_points={
         'console_scripts': [
