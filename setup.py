@@ -4,7 +4,7 @@
 import os
 from setuptools import setup, find_packages
 
-version = '0.0.5'
+version = '0.0.6'
 
 description = "CP2K tools & scripts"
 cur_dir = os.path.dirname(__file__)
@@ -52,4 +52,5 @@ setup(
         'Operating System :: POSIX',
         'Programming Language :: Python',
     ],
+    test_suite = 'tests'
 )

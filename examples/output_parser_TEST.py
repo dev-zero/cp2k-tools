@@ -4,5 +4,5 @@ from cp2k.parser.output import CP2KOutputParser
 
 p = CP2KOutputParser()
 
-with open('C4H4S_dft-only.out', 'r') as f:
+with open(os.path.join(os.path.dirname(__file__), "C4H4S_dft-only.out"), "r") as fhandle:
     p.parse(f)
