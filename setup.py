@@ -52,4 +52,5 @@ setup(
         'Operating System :: POSIX',
         'Programming Language :: Python',
     ],
+    test_suite = 'tests'
 )
