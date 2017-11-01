@@ -27,7 +27,7 @@ content  = ( cline / section )*
 section = section_start section_content section_end
 
 section_start = s* "&" sname (s+ value)? comment? nl
-section_end = s* "&" end (s+ value)? comment? nl
+section_end = s* "&" end (s+ value)? comment? nl?
 section_content = (kv / cline / section )*
 
 kv = s* name s* unitspec? values? s* comment? nl
@@ -41,8 +41,8 @@ name = ~r"[A-Z0-9_\-]+"i
 end = ~r"END"i
 sname = !end name
 
-s = ~r"[ \t]"
-nl = ~r"[\n]"
+s = " " / "\t"
+nl = "\r\n" / "\r" / "\n"
 
 comment  = ~r"[#!].*"
 cline = s* comment? nl
