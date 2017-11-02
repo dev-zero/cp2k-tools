@@ -1,41 +1,50 @@
 
 import re
-import sys
 import contextlib
 
 
 try:
-    # PY2
-    STRING_TYPES = (str, unicode, )
+    # PY2, bytes are also strings and need to be imbued
+    STRING_TYPES = (unicode, )
 except:
     STRING_TYPES = (str, )
 
 
 @contextlib.contextmanager
-def as_stringlike(fh_or_string):
-    if isinstance(fh_or_string, STRING_TYPES):
-        yield fh_or_string
+def as_byteorstringlike(fh_or_content):
+    """
+    Yields a tuple (content, content_type),
+    where content_type is True if content is a unicode string and does not need imbueing,
+    and False if it is a byte-like and needs to be encoded.
+    """
+
+    if isinstance(fh_or_content, STRING_TYPES):
+        yield fh_or_content, True
+    elif isinstance(fh_or_content, bytes):
+        yield fh_or_content, False
     else:
-        # if the handle is a file handle
+        # if the handle is a file handle, use mmap to return a bitelike object
         import mmap
-        mmapped = mmap.mmap(fh_or_string.fileno(), 0, access=mmap.ACCESS_READ)
+        mmapped = mmap.mmap(fh_or_content.fileno(), 0, access=mmap.ACCESS_READ)
 
         try:
-            yield mmapped
+            yield mmapped, False
         finally:
             mmapped.close()
 
 
-POS_MATCH = re.compile(r"""
+# MULTILINE and VERBOSE regex to match coordinate lines in a frame:
+POS_MATCH_REGEX = r"""
 ^                                                                             # Linestart
 [ \t]*                                                                        # Optional white space
 (?P<sym>[A-Za-z]+[A-Za-z0-9]*)\s+                                             # get the symbol
 (?P<x> [\-|\+]?  ( \d*[\.]\d+  | \d+[\.]?\d* )  ([E | e][+|-]?\d+)? ) [ \t]+  # Get x
 (?P<y> [\-|\+]?  ( \d*[\.]\d+  | \d+[\.]?\d* )  ([E | e][+|-]?\d+)? ) [ \t]+  # Get y
 (?P<z> [\-|\+]?  ( \d*[\.]\d+  | \d+[\.]?\d* )  ([E | e][+|-]?\d+)? )         # Get z
-""", re.VERBOSE | re.MULTILINE)
+"""
 
-FRAME_MATCH = re.compile(r"""
+# MULTILINE and VERBOSE regex to match frames:
+FRAME_MATCH_REGEX = r"""
                                                             # First line contains an integer
                                                             # and only an integer: the number of atoms
 ^[ \t]* (?P<natoms> [0-9]+) [ \t]*[\n]                      # End first line
@@ -68,7 +77,7 @@ FRAME_MATCH = re.compile(r"""
         [\n]                                                # line break at the end
     )+
 )                                                           # A positions block should be one or more lines
-""", re.VERBOSE | re.MULTILINE)
+"""
 
 
 class XYZParser:
@@ -140,14 +149,14 @@ class XYZParser:
                         # otherwise we got too less entries
                         raise TypeError("Number of atom entries ({}) is smaller "
                                         "than the number of atoms ({})".format(
-                                        self._catom, self._natoms))
+                                            self._catom, self._natoms))
 
                 self._catom += 1
 
                 if self._catom > self._natoms:
                     raise TypeError("Number of atom entries ({}) is larger "
                                     "than the number of atoms ({})".format(
-                                    self._catom, self._natoms))
+                                        self._catom, self._natoms))
 
                 return (
                     match.group('sym'),
@@ -165,19 +174,31 @@ class XYZParser:
                 return self.__next__()
 
 
-        with as_stringlike(fh_or_string) as content:
-            for block in FRAME_MATCH.finditer(content):
+        with as_byteorstringlike(fh_or_string) as (content, is_string):
+            if is_string:
+                frame_match = re.compile(FRAME_MATCH_REGEX, re.MULTILINE | re.VERBOSE)
+                pos_match = re.compile(POS_MATCH_REGEX, re.MULTILINE | re.VERBOSE)
+            else:
+                # TODO: at this point we might have to care about the encoding of the content as well
+                frame_match = re.compile(FRAME_MATCH_REGEX.encode('utf8'), re.MULTILINE | re.VERBOSE)
+                pos_match = re.compile(POS_MATCH_REGEX.encode('utf8'), re.MULTILINE | re.VERBOSE)
+
+            for block in frame_match.finditer(content):
                 natoms = int(block.group('natoms'))
                 yield (
                     natoms,
-                    block.group('comment'),
+                    block.group('comment') if is_string else block.group('comment').decode('utf8'),
                     BlockIterator(
-                        POS_MATCH.finditer(block.group('positions')),
+                        pos_match.finditer(block.group('positions')),
                         natoms)
                     )
 
     @staticmethod
     def parse(fh_or_string):
+        """
+        The same as parse_iter(...) but instead of iterators, a list of nested dicts containing again
+        a list for the 'atoms' key instead of another iterator are returned.
+        """
         return [{'natoms': natoms,
                  'comment': comment,
                  'atoms': list(atomiter)} for (natoms, comment, atomiter) in XYZParser.parse_iter(fh_or_string)]
