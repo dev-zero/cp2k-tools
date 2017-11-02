@@ -1,4 +1,52 @@
 
+import re
+
+
+POS_MATCH = re.compile(r"""
+^                                                                             # Linestart
+[ \t]*                                                                        # Optional white space
+(?P<sym>[A-Za-z]+[A-Za-z0-9]*)\s+                                             # get the symbol
+(?P<x> [\-|\+]?  ( \d*[\.]\d+  | \d+[\.]?\d* )  ([E | e][+|-]?\d+)? ) [ \t]+  # Get x
+(?P<y> [\-|\+]?  ( \d*[\.]\d+  | \d+[\.]?\d* )  ([E | e][+|-]?\d+)? ) [ \t]+  # Get y
+(?P<z> [\-|\+]?  ( \d*[\.]\d+  | \d+[\.]?\d* )  ([E | e][+|-]?\d+)? )         # Get z
+""", re.VERBOSE | re.MULTILINE)
+
+FRAME_MATCH = re.compile(r"""
+                                                            # First line contains an integer
+                                                            # and only an integer: the number of atoms
+^[ \t]* (?P<natoms> [0-9]+) [ \t]*[\n]                      # End first line
+(?P<comment>.*) [\n]                                        # The second line is a comment
+(?P<positions>                                              # This is the block of positions
+    (
+        (
+            \s*                                             # White space in front of the element spec is ok
+            (
+                [A-Za-z]+[A-Za-z0-9]*                       # Element spec
+                (
+                   \s+                                      # White space in front of the number
+                   [\- | \+ ]?                              # Plus or minus in front of the number (optional)
+                    (\d*                                    # optional decimal in the beginning .0001 is ok, for example
+                    [\.]                                    # There has to be a dot followed by
+                    \d+)                                    # at least one decimal
+                    |                                       # OR
+                    (\d+                                    # at least one decimal, followed by
+                    [\.]?                                   # an optional dot
+                    \d*)                                    # followed by optional decimals
+                    ([E | e][+|-]?\d+)?                     # optional exponents E+03, e-05
+                ){3}                                        # I expect three float values
+                |
+                \#                                          # If a line is commented out, that is also ok
+            )
+            .*                                              # I do not care what is after the comment or the position spec
+            |                                               # OR
+            \s*                                             # A line only containing white space
+         )
+        [\n]                                                # line break at the end
+    )+
+)                                                           # A positions block should be one or more lines
+""", re.VERBOSE | re.MULTILINE)
+
+
 class XYZParser:
     @staticmethod
     def parse_iter(string):
@@ -92,58 +140,14 @@ class XYZParser:
                 """
                 return self.__next__()
 
-        import re
 
-        pos_regex = re.compile(r"""
-^                                                                             # Linestart
-[ \t]*                                                                        # Optional white space
-(?P<sym>[A-Za-z]+[A-Za-z0-9]*)\s+                                             # get the symbol
-(?P<x> [\-|\+]?  ( \d*[\.]\d+  | \d+[\.]?\d* )  ([E | e][+|-]?\d+)? ) [ \t]+  # Get x
-(?P<y> [\-|\+]?  ( \d*[\.]\d+  | \d+[\.]?\d* )  ([E | e][+|-]?\d+)? ) [ \t]+  # Get y
-(?P<z> [\-|\+]?  ( \d*[\.]\d+  | \d+[\.]?\d* )  ([E | e][+|-]?\d+)? )         # Get z
-""", re.X | re.M)
-        pos_block_regex = re.compile(r"""
-                                                            # First line contains an integer
-                                                            # and only an integer: the number of atoms
-^[ \t]* (?P<natoms> [0-9]+) [ \t]*[\n]                      # End first line
-^[ \t]* (?P<comment>.*) [\n]                                # The second line is a comment
-(?P<positions>                                              # This is the block of positions
-    (
-        (
-            \s*                                             # White space in front of the element spec is ok
-            (
-                [A-Za-z]+[A-Za-z0-9]*                       # Element spec
-                (
-                   \s+                                      # White space in front of the number
-                   [\- | \+ ]?                              # Plus or minus in front of the number (optional)
-                    (\d*                                    # optional decimal in the beginning .0001 is ok, for example
-                    [\.]                                    # There has to be a dot followed by
-                    \d+)                                    # at least one decimal
-                    |                                       # OR
-                    (\d+                                    # at least one decimal, followed by
-                    [\.]?                                   # an optional dot
-                    \d*)                                    # followed by optional decimals
-                    ([E | e][+|-]?\d+)?                     # optional exponents E+03, e-05
-                ){3}                                        # I expect three float values
-                |
-                \#                                          # If a line is commented out, that is also ok
-            )
-            .*                                              # I do not care what is after the comment or the position spec
-            |                                               # OR
-            \s*                                             # A line only containing white space
-         )
-        [\n]                                                # line break at the end
-    )+
-)                                                           # A positions block should be one or more lines
-                    """, re.X | re.M)
-
-        for block in pos_block_regex.finditer(string):
+        for block in FRAME_MATCH.finditer(content):
             natoms = int(block.group('natoms'))
             yield (
                 natoms,
                 block.group('comment'),
                 BlockIterator(
-                    pos_regex.finditer(block.group('positions')),
+                    POS_MATCH.finditer(block.group('positions')),
                     natoms)
                 )
 
