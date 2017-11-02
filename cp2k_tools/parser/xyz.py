@@ -1,5 +1,29 @@
 
 import re
+import sys
+import contextlib
+
+
+try:
+    # PY2
+    STRING_TYPES = (str, unicode, )
+except:
+    STRING_TYPES = (str, )
+
+
+@contextlib.contextmanager
+def as_stringlike(fh_or_string):
+    if isinstance(fh_or_string, STRING_TYPES):
+        yield fh_or_string
+    else:
+        # if the handle is a file handle
+        import mmap
+        mmapped = mmap.mmap(fh_or_string.fileno(), 0, access=mmap.ACCESS_READ)
+
+        try:
+            yield mmapped
+        finally:
+            mmapped.close()
 
 
 POS_MATCH = re.compile(r"""
@@ -49,7 +73,7 @@ FRAME_MATCH = re.compile(r"""
 
 class XYZParser:
     @staticmethod
-    def parse_iter(string):
+    def parse_iter(fh_or_string):
         """Generates nested tuples for frames in XYZ files.
 
         Args:
@@ -115,15 +139,15 @@ class XYZParser:
                     else:
                         # otherwise we got too less entries
                         raise TypeError("Number of atom entries ({}) is smaller "
-                            "than the number of atoms ({})".format(
-                                self._catom, self._natoms))
+                                        "than the number of atoms ({})".format(
+                                        self._catom, self._natoms))
 
                 self._catom += 1
 
                 if self._catom > self._natoms:
                     raise TypeError("Number of atom entries ({}) is larger "
-                        "than the number of atoms ({})".format(
-                            self._catom, self._natoms))
+                                    "than the number of atoms ({})".format(
+                                    self._catom, self._natoms))
 
                 return (
                     match.group('sym'),
@@ -141,24 +165,19 @@ class XYZParser:
                 return self.__next__()
 
 
-        for block in FRAME_MATCH.finditer(content):
-            natoms = int(block.group('natoms'))
-            yield (
-                natoms,
-                block.group('comment'),
-                BlockIterator(
-                    POS_MATCH.finditer(block.group('positions')),
-                    natoms)
-                )
+        with as_stringlike(fh_or_string) as content:
+            for block in FRAME_MATCH.finditer(content):
+                natoms = int(block.group('natoms'))
+                yield (
+                    natoms,
+                    block.group('comment'),
+                    BlockIterator(
+                        POS_MATCH.finditer(block.group('positions')),
+                        natoms)
+                    )
 
     @staticmethod
     def parse(fh_or_string):
-        if hasattr(fh_or_string, 'read'):
-            s = fh_or_string.read()
-        else:
-            s = fh_or_string
-
-        return [{ 'natoms': natoms,
-                    'comment': comment,
-                    'atoms': list(atomiter)
-                    } for (natoms, comment,  atomiter) in XYZParser.parse_iter(s)]
+        return [{'natoms': natoms,
+                 'comment': comment,
+                 'atoms': list(atomiter)} for (natoms, comment, atomiter) in XYZParser.parse_iter(fh_or_string)]
