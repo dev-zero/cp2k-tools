@@ -4,7 +4,7 @@
 import os
 from setuptools import setup, find_packages
 
-version = '0.0.6'
+version = '0.0.7'
 
 description = "CP2K tools & scripts"
 cur_dir = os.path.dirname(__file__)
@@ -37,7 +37,8 @@ setup(
             'extract_last_frame = cp2k_tools.cli:extract_last_frame',
             'generate_input = cp2k_tools.cli:generate_input',
             'cp2k_inp2json = cp2k_tools.parser.input_cli:cli',
-            'cp2k_json2inp = cp2k_tools.generator.cli:cli'
+            'cp2k_json2inp = cp2k_tools.generator.cli:cli',
+            'cp2k_xyz_restart_cleaner = cp2k_tools.parser.xyz_cli:xyz_restart_cleaner',
         ],
     },
     scripts=[

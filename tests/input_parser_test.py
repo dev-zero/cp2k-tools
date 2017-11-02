@@ -1,11 +1,10 @@
 import unittest
 
-import os
-
 from parsimonious import IncompleteParseError
 
 from cp2k_tools.parser.input import CP2KInput2Dict
 
+from . import from_test_dir
 
 class TestInputParser(unittest.TestCase):
     def setUp(self):
@@ -17,7 +16,7 @@ class TestInputParser(unittest.TestCase):
         self.assertEqual(struct, {'global': {}})
 
     def test_full(self):
-        with open(os.path.join(os.path.dirname(__file__), "input_parser_test_Si.inp"), "r") as fhandle:
+        with open(from_test_dir("input_parser_test_Si.inp"), "r") as fhandle:
             struct = self.parser.parse(fhandle.read())
             self.assertTrue(struct)
 
