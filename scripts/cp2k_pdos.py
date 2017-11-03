@@ -63,6 +63,8 @@ def main():
                         help="integration step size (default: 0.001)")
     parser.add_argument('--total-sum', action='store_true',
                         help="calculate and print the total sum for each orbital (default: no)")
+    parser.add_argument('--no-header', action='store_true', default=False,
+                        help="disable printing the header line (default: print a header)")
     parser.add_argument('--output', '-o', type=str, default=None,
                         help="write output to specified file (default: write to standard output)")
     args = parser.parse_args()
@@ -76,6 +78,9 @@ def main():
             sys.exit(1)
 
         efermi = float(header.group('Efermi'))
+        # header is originally: ['#', 'MO', 'Eigenvalue', '[a.u.]', 'Occupation', 's', 'py', ...]
+        header = fhandle.readline().rstrip().split()[1:]  # remove the comment directly
+        header[1:3] = [' '.join(header[1:3])]  # rejoin "Eigenvalue" and its unit
         data = np.loadtxt(fhandle)  # load the rest directly with numpy
 
     npnts, ncols = data.shape
@@ -112,6 +117,8 @@ def main():
     ymesh /= args.natoms  # normalize
 
     with smart_open(args.output) as fhandle:
+        if not args.no_header:
+            print(("{:>16}" + " {:>16}"*ncols).format("Energy_[eV]", *header[3:]), file=fhandle)
         for mpnt in range(nmesh):
             print(("{:16.8f}" + " {:16.8f}"*ncols).format(xmesh[mpnt], *ymesh[mpnt, :]), file=fhandle)
 
