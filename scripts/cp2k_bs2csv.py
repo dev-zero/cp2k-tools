@@ -33,6 +33,32 @@ POINTS_MATCH = re.compile(r'''
 )
 ''', re.VERBOSE)
 
+
+def convert_bs2csv(ifile, csvpattern="bs.set-{setnr}.csv"):
+    """
+    Convert the input from the given input file handle and write
+    CSV output files based on the given pattern.
+    """
+    for kpoint_set in SET_MATCH.finditer(ifile.read()):
+        filename = csvpattern.format(setnr=kpoint_set.group('setnr'))
+        set_content = kpoint_set.group('content')
+
+        with open(filename, 'w') as csvout:
+            print(("writing point set {}"
+                   " (total number of k-points: {totalpoints})"
+                   .format(filename, **kpoint_set.groupdict())))
+
+            print("  with the following special points:")
+            for point in SPOINTS_MATCH.finditer(set_content):
+                print("  {pointnr}: {a}/{b}/{c}".format(
+                    **point.groupdict()))
+
+            for point in POINTS_MATCH.finditer(set_content):
+                results = point.groupdict()
+                results['values'] = " ".join(results['values'].split())
+                csvout.write("{a} {b} {c} {values}\n".format(**results))
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('bsfilename', metavar='bandstructure-file', type=str,
@@ -41,22 +67,4 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     with open(args.bsfilename, 'r') as fhandle:
-        for kpoint_set in SET_MATCH.finditer(fhandle.read()):
-            filename = "{}.set-{}.csv".format(args.bsfilename,
-                                              kpoint_set.group('setnr'))
-            set_content = kpoint_set.group('content')
-
-            with open(filename, 'w') as csvout:
-                print(("writing point set {}"
-                       " (total number of k-points: {totalpoints})"
-                       .format(filename, **kpoint_set.groupdict())))
-
-                print("  with the following special points:")
-                for point in SPOINTS_MATCH.finditer(set_content):
-                    print("  {pointnr}: {a}/{b}/{c}".format(
-                        **point.groupdict()))
-
-                for point in POINTS_MATCH.finditer(set_content):
-                    results = point.groupdict()
-                    results['values'] = " ".join(results['values'].split())
-                    csvout.write("{a} {b} {c} {values}\n".format(**results))
+        convert_bs2csv(fhandle, "{}.set-{{setnr}}.csv".format(args.bsfilename))
