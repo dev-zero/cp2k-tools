@@ -4,7 +4,7 @@
 import os
 from setuptools import setup, find_packages
 
-version = '0.0.8'
+version = '0.0.9'
 
 description = "CP2K tools & scripts"
 cur_dir = os.path.dirname(__file__)
@@ -49,7 +49,7 @@ setup(
         'Development Status :: 4 - Beta',
         'Environment :: Console',
         'Intended Audience :: Developers',
-        'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
+        'License :: OSI Approved :: Apache Software License',
         'Operating System :: POSIX',
         'Programming Language :: Python',
     ],
