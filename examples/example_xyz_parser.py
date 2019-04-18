@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from cp2k.parser import XYZParser
+from cp2k_tools.parser import XYZParser
 
 if __name__ == '__main__':
 

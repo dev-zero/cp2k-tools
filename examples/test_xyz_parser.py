@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from cp2k.parser import XYZParser
+from cp2k_tools.parser import XYZParser
 
 def test_multiframe_file():
     p = XYZParser()

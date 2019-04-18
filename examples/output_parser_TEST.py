@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from cp2k.parser.output import CP2KOutputParser
+from cp2k_tools.parser.output import CP2KOutputParser
 
 p = CP2KOutputParser()
 

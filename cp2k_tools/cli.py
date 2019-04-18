@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
-from cp2k.tools import *
-from cp2k.parser import *
-from cp2k.generator import *
+from cp2k_tools.tools import *
+from cp2k_tools.parser import *
+from cp2k_tools.generator import *
 import sys
 from docopt import docopt
 
@@ -157,5 +157,5 @@ Options:
 
 if __name__ == '__main__':
     sys.argv = sys.argv[1:]
-    import cp2k.cli
-    getattr(cp2k.cli, sys.argv[0])()
+    import cp2k_tools.cli
+    getattr(cp2k_tools.cli, sys.argv[0])()
